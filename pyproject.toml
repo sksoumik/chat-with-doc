@@ -1,0 +1,15 @@
+[tool.poetry]
+name = "chat-with-doc"
+version = "0.1.0"
+description = "A Mini RAG application to have conversation with PDFs"
+authors = ["Sadman Kabir Soumik"]
+readme = "README.md"
+
+[tool.poetry.dependencies]
+python = "^3.11"
+streamlit = "^1.30.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
