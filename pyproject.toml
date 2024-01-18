@@ -8,6 +8,13 @@ readme = "README.md"
 [tool.poetry.dependencies]
 python = "^3.11"
 streamlit = "^1.30.0"
+python-dotenv = "^1.0.0"
+google-generativeai = "^0.3.2"
+langchain = "^0.1.1"
+pypdf2 = "^3.0.1"
+chromadb = "^0.4.22"
+faiss-cpu = "^1.7.4"
+langchain-google-genai = "^0.0.6"
 
 
 [build-system]
