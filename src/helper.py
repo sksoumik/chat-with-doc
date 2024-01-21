@@ -1,15 +1,15 @@
-from PyPDF2 import PdfReader
 from langchain.text_splitter import RecursiveCharacterTextSplitter
+from PyPDF2 import PdfReader
 
 
-# This function takes a list of PDF documents as input and extracts the text 
+# This function takes a list of PDF documents as input and extracts the text
 # from each page of each document, concatenating them into a single string.
 def get_pdf_text(pdf_docs):
-    text=""
+    text = ""
     for pdf in pdf_docs:
-        pdf_reader= PdfReader(pdf)
+        pdf_reader = PdfReader(pdf)
         for page in pdf_reader.pages:
-            text+= page.extract_text()
+            text += page.extract_text()
     return text
 
 
@@ -24,4 +24,3 @@ def get_text_chunks(text):
     text_splitter = RecursiveCharacterTextSplitter(chunk_size=10000, chunk_overlap=1000)
     chunks = text_splitter.split_text(text)
     return chunks
-

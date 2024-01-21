@@ -1,6 +1,6 @@
-from langchain_google_genai import ChatGoogleGenerativeAI
-from langchain.prompts import PromptTemplate
 from langchain.chains.question_answering import load_qa_chain
+from langchain.prompts import PromptTemplate
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 
 def get_conversational_chain():
@@ -13,13 +13,10 @@ def get_conversational_chain():
     Answer:
     """
 
-    model = ChatGoogleGenerativeAI(model="gemini-pro",
-                             temperature=0.3)
+    model = ChatGoogleGenerativeAI(model="gemini-pro", temperature=0.3)
 
-    prompt = PromptTemplate(template = prompt_template, input_variables = ["context", "question"])
+    prompt = PromptTemplate(
+        template=prompt_template, input_variables=["context", "question"]
+    )
     chain = load_qa_chain(model, chain_type="stuff", prompt=prompt)
     return chain
-
-
-
-
