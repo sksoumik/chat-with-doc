@@ -1,39 +1,15 @@
 import os
-import requests
-from langchain_core.messages import HumanMessage
-from langchain_google_genai import ChatGoogleGenerativeAI
-
 
 import google.generativeai as genai
 import streamlit as st
 from dotenv import load_dotenv
 
-from src.helper import get_pdf_text, get_text_chunks
+from src.helper import get_pdf_text, get_text_chunks, get_url_content
 from src.vector_db import get_vector_store, user_input
 
 load_dotenv()
 os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
-
-
-# def chat_with_image(image_url, question):
-#     llm = ChatGoogleGenerativeAI(model="gemini-pro-vision", temperature=0.4)
-#     message = HumanMessage(
-#     content=[
-#         {
-#             "type": "text",
-#             "text": question,
-#         },  # You can optionally provide text parts
-#         {
-#             "type": "image_url",
-#             "image_url": image_url
-#          },
-#     ]
-# )
-
-#     context = llm.invoke([message])
-#     print(context)
-#     return context
 
 
 def main():
@@ -52,15 +28,18 @@ def main():
         st.markdown("---")
 
         # Section for PDF uploads
-        pdf_docs = st.file_uploader(
-            "Upload your PDF files and Submit", accept_multiple_files=True
-        )
-        if st.button("Submit & Process PDFs"):
-            with st.spinner("Processing PDFs..."):
-                raw_text = get_pdf_text(pdf_docs)
-                text_chunks = get_text_chunks(raw_text)
-                get_vector_store(text_chunks)
-                st.success("PDFs processed")
+        try:
+            pdf_docs = st.file_uploader(
+                "Upload your PDF files and Submit", accept_multiple_files=True
+            )
+            if st.button("Submit & Process PDFs"):
+                with st.spinner("Processing PDFs..."):
+                    raw_text = get_pdf_text(pdf_docs)
+                    text_chunks = get_text_chunks(raw_text)
+                    get_vector_store(text_chunks)
+                    st.success("PDFs processed")
+        except Exception as e:
+            st.warning("Please upload a PDF file.")
 
         st.markdown("---")
         urls = st.text_area("Enter multiple URLs (one per line):")
@@ -80,22 +59,6 @@ def main():
 
                 get_vector_store(all_text_chunks)
                 st.success("URLs processed")
-        
-
-
-
-
-def get_url_content(url):
-    """Fetches the text content from a URL."""
-    try:
-        response = requests.get(url)
-        response.raise_for_status()  # Raise an exception for error responses
-        return response.text
-    except requests.exceptions.RequestException as e:
-        print(f"Error fetching content from URL: {url}")
-        print(e)
-        return None
-
 
 
 if __name__ == "__main__":
