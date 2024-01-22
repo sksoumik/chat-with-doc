@@ -2,7 +2,7 @@ import streamlit as st
 from langchain.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-from src.promt_chain import get_conversational_chain
+from src.rag_chain import get_conversational_chain
 
 
 # This function takes a list of text chunks as input and returns a vector store.

@@ -17,7 +17,12 @@ faiss-cpu = "^1.7.4"
 langchain-google-genai = "^0.0.6"
 black = "^23.12.1"
 isort = "^5.13.2"
+datasets = "^2.16.1"
+ragas = "^0.0.22"
 
+
+[tool.poetry.group.dev.dependencies]
+ipykernel = "^6.29.0"
 
 [build-system]
 requires = ["poetry-core"]

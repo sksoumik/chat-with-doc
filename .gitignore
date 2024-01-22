@@ -129,3 +129,7 @@ dmypy.json
 # Pyre type checker
 .pyre/
 faiss_index/
+*.faiss
+*.pkl
+*.pdf
+.DS_Store
