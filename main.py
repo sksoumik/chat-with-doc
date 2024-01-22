@@ -38,7 +38,7 @@ genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
 def main():
     st.set_page_config("Chat with PDFs and URLs")
-    st.header("Chat with PDFs and URLs using Gemni Pro")
+    st.header("Chat with PDFs and Web pages using Gemni Pro")
 
     user_question = st.text_input("Ask a question")
 
