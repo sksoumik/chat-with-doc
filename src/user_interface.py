@@ -1,16 +1,10 @@
-import streamlit as st
 from typing import List
+
+import streamlit as st
 from langchain.vectorstores import FAISS
 from langchain_google_genai import GoogleGenerativeAIEmbeddings
 
-from src.rag_chain import get_conversational_chain
-
-
-def get_vector_store(text_chunks: List[str]):
-    """Creates a vector store from a list of text chunks."""
-    embeddings = GoogleGenerativeAIEmbeddings(model="models/embedding-001")
-    vector_store = FAISS.from_texts(text_chunks, embedding=embeddings)
-    vector_store.save_local("faiss_index")
+from src.vector_store import get_conversational_chain
 
 
 def user_input(user_question: str):

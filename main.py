@@ -4,10 +4,13 @@ import google.generativeai as genai
 import streamlit as st
 from dotenv import load_dotenv
 
-from src.helper import get_pdf_text, get_text_chunks, get_url_content
-from src.vector_db import get_vector_store, user_input
+from src.document_processing import get_pdf_text, get_text_chunks
+from src.user_interface import user_input
+from src.vector_store import get_vector_store
+from src.web_page_retrieval import get_url_content
 
 load_dotenv()
+# GOOGLE_API_KEY should be set in .env file
 os.getenv("GOOGLE_API_KEY")
 genai.configure(api_key=os.getenv("GOOGLE_API_KEY"))
 
