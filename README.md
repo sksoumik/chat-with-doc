@@ -1,4 +1,4 @@
-#### RAG pipeline using LangChain, Gemni Pro, Faiss
+#### RAG pipeline using LangChain, Gemini pro, Faiss
 This is a simple RAG pipeline that can talk with PDF files and Web pages. The pipeline has been deployed using Streamlit. 
 
 ![Streamlit UI](static/rag_UI.png)
@@ -26,7 +26,7 @@ poetry install
 ```
 3. Add Gemni Pro API
 
-Get your [Gemni Pro API key](https://makersuite.google.com/app/apikey) 
+Get your [Gemini Pro API key](https://makersuite.google.com/app/apikey) 
 
 Create a `.env` file in the project root folder and add the API key like below (add yours, the following won't work):
 ```bash
