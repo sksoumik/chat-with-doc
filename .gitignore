@@ -133,3 +133,10 @@ faiss_index/
 *.pkl
 *.pdf
 .DS_Store
+
+# Environment variables
+.env
+*.pyc
+__pycache__/
+logs/
+.vscode/

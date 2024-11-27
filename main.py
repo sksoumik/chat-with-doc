@@ -1,63 +1,149 @@
-import streamlit as st
+import sys
 from collections import deque
-from src.vector_store import get_vector_store, FAISS
-from src.document_processing import get_pdf_text, get_text_chunks
-from src.web_page_retrieval import get_url_content
-from src.user_interface import user_input
+from pathlib import Path
+from typing import List
 
-def reset_input():
+import streamlit as st
+
+from src.config import AppConfig
+from src.debug_config import DEBUG_CONFIG
+from src.document_processing import DocumentProcessor
+from src.logger import setup_logger
+from src.user_interface import UserInterface
+from src.vector_store import VectorStore
+from src.web_page_retrieval import WebPageRetriever
+
+logger = setup_logger(__name__)
+
+if DEBUG_CONFIG["development_mode"]:
+    logger.debug("Running in development mode")
+    logger.debug(f"Python version: {sys.version}")
+    logger.debug(f"Python path: {sys.path}")
+
+
+def reset_input() -> None:
+    """Reset the user input field."""
     st.session_state.user_input = ""
 
 
-def main():
-    st.set_page_config(page_title="Chat with PDFs and URLs", layout="wide")
-    st.header("Chat with PDFs and Web pages using Gemini Pro")
-
-    if 'history' not in st.session_state:
+def initialize_session_state() -> None:
+    """Initialize session state variables."""
+    if "history" not in st.session_state:
         st.session_state.history = deque(maxlen=10)
 
-    with st.container():
-        for message in reversed(st.session_state.history):
-            st.text_area("", value=message, height=80, key=message, disabled=True)
 
-    user_question = st.text_input("Ask a question", key="user_input", on_change=reset_input)
+def main() -> None:
+    """Main application entry point."""
+    try:
+        config = AppConfig()
+        doc_processor = DocumentProcessor(config)
+        vector_store = VectorStore(config)
+        web_retriever = WebPageRetriever()
+        ui = UserInterface(vector_store, config)
 
-    if user_question:
-        response = user_input(user_question)
-        st.session_state.history.appendleft(f"Q: {user_question}")
-        st.session_state.history.appendleft(f"A: {response}")
+        st.set_page_config(page_title=config.page_title, layout="wide")
+        st.header(config.header_text)
 
-    with st.sidebar:
-        st.header("Upload PDFs or enter URLs to process")
-        st.markdown("---")
+        initialize_session_state()
 
-        try:
-            pdf_docs = st.file_uploader("Upload your PDF files and Submit", accept_multiple_files=True)
-            if st.button("Submit & Process PDFs"):
+        chat_col, doc_col = st.columns([2, 1])
+
+        with chat_col:
+            st.markdown("### Chat Interface")
+
+            if st.session_state.history:
+                ui.display_chat_history(list(st.session_state.history))
+
+            user_question = st.text_input(
+                "Ask a question about your documents",
+                key="user_input",
+                on_change=reset_input,
+            )
+
+            if user_question:
+                try:
+                    logger.info(f"Processing question: {user_question}")
+
+                    if not Path(config.vector_store_path).exists():
+                        logger.warning("No vector store found")
+                        st.warning("Please upload and process some documents first.")
+                        return
+
+                    question_container = st.container()
+                    response_container = st.container()
+
+                    with question_container:
+                        st.info(f"👤 User: {user_question}")
+
+                    with response_container:
+                        with st.spinner("Getting response..."):
+                            response = ui.process_question(user_question)
+
+                            if response:
+                                logger.info("Response received, updating history")
+                                st.session_state.history.appendleft(
+                                    f"Q: {user_question}"
+                                )
+                                st.session_state.history.appendleft(f"A: {response}")
+
+                                st.experimental_rerun()
+                            else:
+                                st.error("Failed to get response")
+
+                except Exception as e:
+                    logger.error(f"Error in main loop: {str(e)}", exc_info=True)
+                    st.error(f"An error occurred: {str(e)}")
+
+        with doc_col:
+            st.subheader("Document Processing")
+
+            pdf_docs = st.file_uploader(
+                "Upload your PDF files", accept_multiple_files=True, type=["pdf"]
+            )
+
+            if st.button("Process PDFs", key="pdf_button"):
                 with st.spinner("Processing PDFs..."):
-                    raw_text = get_pdf_text(pdf_docs)
-                    text_chunks = get_text_chunks(raw_text)
-                    get_vector_store(text_chunks)
-                    st.success("PDFs processed")
-        except Exception as e:
-            st.warning("Please upload a PDF file.")
+                    processed = False
+                    for pdf in pdf_docs:
+                        document = doc_processor.process_pdf(pdf)
+                        if document:
+                            chunks = doc_processor.chunk_text(document.content)
+                            if vector_store.create_vector_store(chunks):
+                                processed = True
 
-        st.markdown("---")
-        urls = st.text_area("Enter multiple URLs (one per line):")
-        if st.button("Submit & Process URLs"):
-            with st.spinner("Processing URLs..."):
-                url_contents = []
-                for url in urls.splitlines():
-                    url_content = get_url_content(url)
-                    url_contents.append(url_content)
+                    if processed:
+                        st.success("PDFs processed successfully!")
+                    else:
+                        st.warning("No PDFs were processed.")
 
-                all_text_chunks = []
-                for url_content in url_contents:
-                    text_chunks = get_text_chunks(url_content)
-                    all_text_chunks.extend(text_chunks)
+            st.markdown("---")
+            urls = st.text_area(
+                "Enter URLs (one per line)",
+                help="Enter web page URLs to process their content",
+            )
 
-                get_vector_store(all_text_chunks)
-                st.success("URLs processed")
+            if st.button("Process URLs", key="url_button"):
+                with st.spinner("Processing URLs..."):
+                    all_chunks: List[str] = []
+                    processed = False
+
+                    for url in urls.splitlines():
+                        if url.strip():
+                            document = web_retriever.get_content(url)
+                            if document:
+                                chunks = doc_processor.chunk_text(document.content)
+                                all_chunks.extend(chunks)
+                                processed = True
+
+                    if processed and vector_store.create_vector_store(all_chunks):
+                        st.success("URLs processed successfully!")
+                    else:
+                        st.warning("No URLs were processed.")
+
+    except Exception as e:
+        logger.error(f"Application error: {str(e)}")
+        st.error(f"An error occurred: {str(e)}\nPlease check the logs for details.")
+
 
 if __name__ == "__main__":
     main()
